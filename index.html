@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小森林兒科 - 沖繩5日員工旅遊</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom Config for Colors -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pms292: '#69B3E7', // PMS 292 approx
+                        pmsLight: '#E0F2FE',
+                        cream: '#FDFBF7',  // Soft Cream
+                        creamDark: '#F5F0E6',
+                        pastelYellow: '#FEF3C7',
+                        pastelPink: '#FCE7F3',
+                        textMain: '#4A5568', // Softer black
+                        textLight: '#A0AEC0',
+                        oceanBlue: '#A5D8F3',
+                        deepOcean: '#69B3E7',
+                        // Meal colors
+                        mealBreakfast: '#FEF9C3', // Light Yellow
+                        mealLunch: '#FFEDD5',     // Light Orange
+                        mealDinner: '#E0E7FF',    // Light Indigo
+                        treeGreen: '#48BB78',
+                        treeBrown: '#8B4513',
+                    },
+                    fontFamily: {
+                        sans: ['"Zen Maru Gothic"', '"Noto Sans TC"', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        '4xl': '2rem',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts: Zen Maru Gothic for rounded feel -->
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Zen Maru Gothic', 'Noto Sans TC', sans-serif;
+            background-color: #FDFBF7; /* Cream background */
+            overflow-x: hidden; /* Prevent horizontal scrollbar due to animations */
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(105, 179, 231, 0.1), 0 2px 4px -1px rgba(105, 179, 231, 0.06);
+        }
+        
+        /* --- Top Header Animations --- */
+        /* Sun Rotation */
+        .spin-slow {
+            animation: spin 30s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Cloud Drifting */
+        @keyframes drift {
+            from { transform: translateX(-150%); }
+            to { transform: translateX(450%); }
+        }
+        .drift-slow {
+            animation: drift 80s linear infinite;
+        }
+        .drift-medium {
+            animation: drift 60s linear infinite;
+        }
+
+        /* Tree Swaying */
+        @keyframes sway {
+            0%, 100% { transform: rotate(-3deg); }
+            50% { transform: rotate(3deg); }
+        }
+        .sway {
+            transform-origin: bottom center;
+            animation: sway 4s ease-in-out infinite;
+        }
+
+
+        /* --- Bottom Footer Animations --- */
+        /* Wave Animations */
+        @keyframes wave {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .wave-back {
+            animation: wave 15s linear infinite;
+        }
+        .wave-front {
+            animation: wave 10s linear infinite;
+        }
+
+        /* Whale Shark Swimming Right (Head Forward) */
+        @keyframes swimRight {
+             0% { transform: translateX(-30vw) translateY(0) rotate(1deg); }
+            25% { transform: translateX(20vw) translateY(15px) rotate(-1deg); }
+            50% { transform: translateX(60vw) translateY(0) rotate(1deg); }
+            75% { transform: translateX(100vw) translateY(-15px) rotate(-1deg); }
+            100% { transform: translateX(140vw) translateY(0) rotate(1deg); }
+        }
+        .whale-shark-right {
+            position: absolute;
+            animation: swimRight 50s linear infinite; 
+            opacity: 0.9;
+            filter: drop-shadow(0 4px 4px rgba(105, 179, 231, 0.3));
+            will-change: transform; 
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- Decorative Icons ---
+        const CloudIcon = ({ className, style }) => (
+            <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17.5,19c-3.037,0-5.5-2.463-5.5-5.5c0-0.104,0.006-0.207,0.014-0.31C11.516,13.068,10.793,13,10,13c-2.761,0-5,2.239-5,5c0,2.761,2.239,5,5,5h7.5c2.485,0,4.5-2.015,4.5-4.5S19.985,14,17.5,14c-0.383,0-0.751,0.053-1.104,0.144C16.891,15.656,17.5,17.264,17.5,19z"/>
+                <path d="M17.5,12c-0.268,0-0.528,0.026-0.781,0.071c-0.204-2.193-2.054-3.92-4.331-3.92c-1.636,0-3.076,0.895-3.861,2.223C8.24,10.137,7.882,10,7.5,10C5.015,10,3,12.015,3,14.5S5.015,19,7.5,19c0.165,0,0.328-0.01,0.487-0.026C7.636,19.229,7.5,19.559,7.5,19.914C7.5,21.614,8.886,23,10.586,23H17.5c3.037,0,5.5-2.463,5.5-5.5S20.537,12,17.5,12z" opacity="0.4"/>
+            </svg>
+        );
+
+        const SunDecor = ({ className }) => (
+            <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="5" fill="#FCD34D" />
+                <path d="M12 1V3M12 21V23M1 12H3M21 12H23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22" stroke="#FCD34D" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+        );
+
+        const TreeIcon = ({ className, style }) => (
+            <svg className={className} style={style} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 12L14 22H10L12 12Z" fill="#8B4513" />
+                <path d="M12 14C9 14 4 11 4 6C4 3 7 2 12 2C17 2 20 3 20 6C20 11 15 14 12 14Z" fill="#48BB78" />
+                <path d="M12 2C10 4 8 6 12 6C16 6 14 4 12 2Z" fill="#38A169" opacity="0.5"/>
+            </svg>
+        );
+
+        const WhaleSharkIcon = () => (
+            <svg viewBox="0 0 200 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M180 50 C 180 70, 140 80, 100 80 C 60 80, 30 70, 10 50 C 30 30, 60 20, 100 20 C 140 20, 180 30, 180 50 Z" fill="#69B3E7" />
+                <path d="M10 50 C 5 40, 0 30, 5 20 L 15 50 L 5 80 C 0 70, 5 60, 10 50" fill="#69B3E7" />
+                <path d="M90 20 C 95 10, 105 5, 110 20" fill="#69B3E7" />
+                <circle cx="60" cy="40" r="2" fill="white" opacity="0.6"/>
+                <circle cx="80" cy="35" r="3" fill="white" opacity="0.6"/>
+                <circle cx="100" cy="40" r="2.5" fill="white" opacity="0.6"/>
+                <circle cx="120" cy="35" r="2" fill="white" opacity="0.6"/>
+                <circle cx="70" cy="55" r="2" fill="white" opacity="0.6"/>
+                <circle cx="90" cy="60" r="3" fill="white" opacity="0.6"/>
+                <circle cx="110" cy="55" r="2.5" fill="white" opacity="0.6"/>
+                <circle cx="130" cy="50" r="2" fill="white" opacity="0.6"/>
+                <circle cx="150" cy="45" r="2" fill="white" opacity="0.6"/>
+                <circle cx="160" cy="55" r="2" fill="#2D3748" />
+                <path d="M140 45 L 140 60" stroke="#4A90E2" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M145 45 L 145 60" stroke="#4A90E2" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M150 45 L 150 60" stroke="#4A90E2" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+        );
+
+        // --- Functional Icons ---
+        const PlaneIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12h20"/><path d="M13 2l9 10-9 10"/><path d="M2 12l5-5m0 10l-5-5"/></svg>
+        );
+        const PlaneTakeoff = () => (
+             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 22h20"/><path d="M8 3.3 11 12h8.5c1.4 0 2.5 1.1 2.5 2.5s-1.1 2.5-2.5 2.5H6.9a2 2 0 0 1-1.9-1.4L2 8.6c.4-.4 1.1-.4 1.5 0L6 11l6-7.7a2 2 0 0 1 2.8 0Z"/></svg>
+        );
+        const MapPinIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        );
+        const BedIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
+        );
+        const CoffeeIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/></svg>
+        );
+        const UtensilsIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>
+        );
+        const SunIcon = () => (
+             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        );
+        const MoonIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        );
+
+        // Data Source
+        const itineraryData = [
+            {
+                date: "5/11",
+                weekday: "週一",
+                title: "啟程 / 那霸市區",
+                items: [
+                    {
+                        type: "flight",
+                        title: "桃園 → 沖繩那霸",
+                        time: "13:20 - 15:50",
+                        desc: "搭乘 OD882 班機，前往日本最南端的度假勝地。",
+                        icon: <PlaneTakeoff />
+                    },
+                     {
+                        type: "lunch",
+                        title: "午餐：機上精緻餐點",
+                        desc: "於飛機上享用精緻簡餐。",
+                        icon: <UtensilsIcon />
+                    },
+                    {
+                        type: "activity",
+                        title: "國際通 (自行前往)",
+                        desc: "抵達後自由活動。國際通是那霸最繁華的街道，充滿伴手禮店與特色小吃。",
+                        icon: <MapPinIcon />
+                    },
+                    {
+                        type: "dinner",
+                        title: "晚餐：方便逛街敬請自理",
+                        desc: "推薦品嚐當地屋台村美食或沖繩麵。",
+                        icon: <MoonIcon />
+                    },
+                    {
+                        type: "hotel",
+                        title: "住宿安排",
+                        desc: "Hotel Lantana / Route Inn Grantia / Naha Central (西館) / RJ飯店 或同級",
+                        icon: <BedIcon />
+                    }
+                ]
+            },
+            {
+                date: "5/12",
+                weekday: "週二",
+                title: "海洋生態 / 美國村",
+                items: [
+                    {
+                        type: "breakfast",
+                        title: "早餐：飯店內用",
+                        desc: "享用飯店豐盛早餐，補充一天活力。",
+                        icon: <CoffeeIcon />
+                    },
+                    {
+                        type: "activity",
+                        title: "美麗海水族館",
+                        desc: "東亞第一大水族館，觀賞巨大的鯨鯊與鬼蝠魟，還有精彩的海豚表演。",
+                        icon: <MapPinIcon />
+                    },
+                    {
+                        type: "lunch",
+                        title: "午餐：沖繩特色餐",
+                        desc: "餐標 ¥2000，品嚐道地島嶼料理。",
+                        icon: <UtensilsIcon />
+                    },
+                    {
+                        type: "activity",
+                        title: "星野 BANTA 海景咖啡",
+                        desc: "IG 網美打卡熱點，日本國內規模最大的海景咖啡廳之一，環繞珊瑚礁美景。",
+                        icon: <CoffeeIcon />
+                    },
+                    {
+                        type: "activity",
+                        title: "免稅店 & 北谷町美國村",
+                        desc: "充滿美式風情的購物娛樂區，擁有摩天輪與日落海灘美景。",
+                        icon: <MapPinIcon />
+                    },
+                    {
+                        type: "dinner",
+                        title: "晚餐：琉球風味餐",
+                        desc: "餐標 ¥2500，享受傳統琉球美味。",
+                        icon: <UtensilsIcon />
+                    },
+                    {
+                        type: "hotel",
+                        title: "住宿安排",
+                        desc: "同前一晚",
+                        icon: <BedIcon />
+                    }
+                ]
+            },
+            {
+                date: "5/13",
+                weekday: "週三",
+                title: "文化探索 / 鐘乳石洞",
+                items: [
+                     {
+                        type: "breakfast",
+                        title: "早餐：飯店內用",
+                        desc: "享用飯店豐盛早餐。",
+                        icon: <CoffeeIcon />
+                    },
+                    {
+                        type: "activity",
+                        title: "Gangala 之谷 (導覽)",
+                        desc: "數十萬年前鐘乳洞崩塌形成的太古森林，感受神秘的大自然力量。",
+                        icon: <MapPinIcon />
+                    },
+                    {
+                        type: "activity",
+                        title: "沖繩文化王國 (玉泉洞、毒蛇博物館)",
+                        desc: "參觀歷經30萬年形成的鐘乳石洞，以及驚險刺激的毒蛇博物館公園。",
+                        icon: <MapPinIcon />
+                    },
+                    {
+                        type: "lunch",
+                        title: "午餐：沖繩特色餐",
+                        desc: "餐標 ¥2000，品嚐道地島嶼料理。",
+                        icon: <UtensilsIcon />
+                    },
+                    {
+                        type: "activity",
+                        title: "泡盛酒廠 & 波之上神宮",
+                        desc: "參觀沖繩代表性的燒酒釀造，並參拜建立在懸崖上的波之上神宮。",
+                        icon: <MapPinIcon />
+                    },
+                    {
+                        type: "dinner",
+                        title: "晚餐：琉球風味餐",
+                        desc: "餐標 ¥2500，享受傳統琉球美味。",
+                        icon: <UtensilsIcon />
+                    },
+                    {
+                        type: "hotel",
+                        title: "住宿安排",
+                        desc: "同前一晚",
+                        icon: <BedIcon />
+                    }
+                ]
+            },
+            {
+                date: "5/14",
+                weekday: "週四",
+                title: "自由探索日",
+                items: [
+                    {
+                        type: "breakfast",
+                        title: "早餐：飯店內用",
+                        desc: "享受一個沒有 Morning Call 的早晨。",
+                        icon: <CoffeeIcon />
+                    },
+                    {
+                        type: "activity",
+                        title: "全日自由活動",
+                        desc: "自由探索那霸市區或安排個人喜愛的景點。",
+                        icon: <SunIcon />
+                    },
+                    {
+                        type: "lunch",
+                        title: "午餐建議：暖暮拉麵 那霸牧志店",
+                        desc: "Google評論超過5000則！九州拉麵票選第一名，排隊名店。(自行前往)",
+                        icon: <UtensilsIcon />
+                    },
+                    {
+                        type: "dinner",
+                        title: "晚餐建議：ゆうなんぎい (Yunangi)",
+                        desc: "Google評論超過2000則！國際通附近老牌沖繩家庭料理居酒屋。(自行前往)",
+                        icon: <MoonIcon />
+                    },
+                    {
+                        type: "hotel",
+                        title: "住宿安排",
+                        desc: "同前一晚",
+                        icon: <BedIcon />
+                    }
+                ]
+            },
+            {
+                date: "5/15",
+                weekday: "週五",
+                title: "海鮮 / 購物 / 返程",
+                items: [
+                    {
+                        type: "breakfast",
+                        title: "早餐：飯店內用",
+                        desc: "享用飯店豐盛早餐。",
+                        icon: <CoffeeIcon />
+                    },
+                    {
+                        type: "activity",
+                        title: "系滿魚市場",
+                        desc: "品嚐新鮮平價的海鮮生魚片、甜蝦、牡蠣。",
+                        icon: <MapPinIcon />
+                    },
+                    {
+                        type: "lunch",
+                        title: "午餐：系滿魚市場自理",
+                        desc: "直接在市場享用新鮮海產。",
+                        icon: <UtensilsIcon />
+                    },
+                    {
+                        type: "activity",
+                        title: "瀨長島",
+                        desc: "有「沖繩小希臘」之稱，純白建築依山而建，無敵海景與特色甜點店。",
+                        icon: <MapPinIcon />
+                    },
+                    {
+                        type: "activity",
+                        title: "ASHIBINAA Outlet",
+                        desc: "仿古希臘建築的暢貨中心，聚集70多種名牌，把握最後購物機會。",
+                        icon: <MapPinIcon />
+                    },
+                    {
+                        type: "flight",
+                        title: "沖繩那霸 → 桃園",
+                        time: "16:50 - 17:30",
+                        desc: "搭乘 OD883 班機，帶著滿滿的回憶返回溫暖的家。",
+                        icon: <PlaneIcon />
+                    }
+                ]
+            }
+        ];
+
+        const Card = ({ item }) => {
+            const isFlight = item.type === 'flight';
+            const isHotel = item.type === 'hotel';
+            const isBreakfast = item.type === 'breakfast';
+            const isLunch = item.type === 'lunch';
+            const isDinner = item.type === 'dinner';
+            
+            let bgColor = 'bg-white/95'; 
+            let iconColor = 'text-pms292';
+            let iconBg = 'bg-blue-50';
+            let textColor = 'text-textMain';
+            let descColor = 'text-textLight';
+            
+            if (isFlight) {
+                bgColor = 'bg-blue-50/95';
+                iconBg = 'bg-white';
+            } else if (isHotel) {
+                iconColor = 'text-indigo-400';
+                iconBg = 'bg-indigo-50';
+            } else if (isBreakfast) {
+                bgColor = 'bg-mealBreakfast';
+                iconColor = 'text-yellow-600';
+                iconBg = 'bg-white/60';
+                textColor = 'text-yellow-900';
+                descColor = 'text-yellow-700/80';
+            } else if (isLunch) {
+                bgColor = 'bg-mealLunch';
+                iconColor = 'text-orange-600';
+                iconBg = 'bg-white/60';
+                textColor = 'text-orange-900';
+                descColor = 'text-orange-700/80';
+            } else if (isDinner) {
+                bgColor = 'bg-mealDinner';
+                iconColor = 'text-indigo-600';
+                iconBg = 'bg-white/60';
+                textColor = 'text-indigo-900';
+                descColor = 'text-indigo-700/80';
+            }
+
+            return (
+                <div className={`mb-3 rounded-2xl ${bgColor} backdrop-blur-sm card-shadow overflow-hidden transform transition-all duration-300 hover:scale-[1.01] hover:-translate-y-0.5 min-h-[90px] flex flex-col justify-center`}>
+                    <div className={`p-4 flex gap-4 items-center`}>
+                        <div className={`flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-2xl ${iconBg} ${iconColor}`}>
+                            {item.icon}
+                        </div>
+                        <div className="flex-grow">
+                            <h3 className={`font-bold text-lg ${textColor} mb-1 leading-tight`}>{item.title}</h3>
+                            {item.time && (
+                                <div className="inline-block px-3 py-1 rounded-full bg-pms292 text-white text-xs font-bold mb-2">
+                                    {item.time}
+                                </div>
+                            )}
+                            <p className={`${descColor} text-sm leading-relaxed tracking-wide font-medium`}>{item.desc}</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const BackgroundAnimation = () => {
+            return (
+                <div className="fixed bottom-0 left-0 w-full h-[30vh] -z-0 pointer-events-none overflow-hidden">
+                    
+                    {/* Whale Shark Parent (Leading) */}
+                    <div className="whale-shark-right" style={{ width: '160px', zIndex: 5, bottom: '60px', left: '0' }}>
+                        <WhaleSharkIcon />
+                    </div>
+
+                    {/* Whale Shark Baby (Following) */}
+                    <div className="whale-shark-right" style={{ width: '90px', zIndex: 4, bottom: '40px', left: '-120px', animationDelay: '0.1s' }}>
+                        <WhaleSharkIcon />
+                    </div>
+
+                    {/* Back Wave */}
+                    <div className="absolute bottom-0 left-0 w-[200%] h-full flex opacity-40">
+                         <svg className="w-full h-full wave-back" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                            <path fill="#A5D8F3" fillOpacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,197.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                        </svg>
+                         <svg className="w-full h-full wave-back" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                            <path fill="#A5D8F3" fillOpacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,197.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                        </svg>
+                    </div>
+
+                    {/* Front Wave */}
+                    <div className="absolute bottom-[-10px] left-0 w-[200%] h-full flex opacity-60">
+                         <svg className="w-full h-full wave-front" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                            <path fill="#69B3E7" fillOpacity="1" d="M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                        </svg>
+                         <svg className="w-full h-full wave-front" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                            <path fill="#69B3E7" fillOpacity="1" d="M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                        </svg>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState(0);
+
+            return (
+                <div className="min-h-screen pb-24 bg-cream relative">
+                    
+                    {/* Cute Header Section */}
+                    <header className="relative bg-pms292 pt-8 pb-16 px-6 overflow-hidden rounded-b-[3rem] shadow-lg z-10">
+                        {/* Background Decor - Animated */}
+                        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+                            {/* Spinning Sun */}
+                            <SunDecor className="absolute top-6 right-10 w-24 h-24 text-yellow-300 opacity-90 spin-slow" />
+                            
+                            {/* Drifting Clouds */}
+                            <div className="absolute top-0 left-0 w-full h-full">
+                                 <CloudIcon className="absolute top-8 w-28 h-28 text-white opacity-25 drift-slow" style={{animationDelay: '0s', left: '-10%'}} />
+                                 <CloudIcon className="absolute top-20 w-16 h-16 text-white opacity-20 drift-medium" style={{animationDelay: '-20s', left: '10%'}} />
+                                 <CloudIcon className="absolute top-12 w-20 h-20 text-white opacity-20 drift-slow" style={{animationDelay: '-40s', left: '60%'}} />
+                            </div>
+                            
+                            {/* Swaying Trees on horizon */}
+                            <div className="absolute bottom-14 left-0 w-full flex justify-around opacity-30 px-2">
+                                 <TreeIcon className="w-8 h-8 sway" style={{animationDelay: '0s'}} />
+                                 <TreeIcon className="w-6 h-6 sway" style={{animationDelay: '-1.5s'}} />
+                                 <TreeIcon className="w-10 h-10 sway" style={{animationDelay: '-0.5s'}} />
+                                 <TreeIcon className="w-7 h-7 sway" style={{animationDelay: '-2.5s'}} />
+                                 <TreeIcon className="w-9 h-9 sway" style={{animationDelay: '-1s'}} />
+                            </div>
+                            
+                            {/* Plane path */}
+                             <div className="absolute top-24 left-0 w-full opacity-40">
+                                <svg className="w-full h-20" viewBox="0 0 300 50">
+                                    <path d="M-10,40 Q150,-20 310,40" fill="none" stroke="white" strokeWidth="2" strokeDasharray="8 8" />
+                                </svg>
+                                <div className="absolute top-4 left-2/3 transform -rotate-12">
+                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                                        <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="relative z-10 text-center text-white mt-4">
+                            <div className="inline-block px-4 py-1 rounded-full bg-white/20 backdrop-blur-sm text-sm font-bold tracking-widest mb-3 shadow-sm">
+                                員工旅遊 2026
+                            </div>
+                            <h1 className="text-3xl font-bold tracking-wide mb-2 drop-shadow-md">小森林兒科</h1>
+                            <p className="text-lg opacity-95 font-medium flex justify-center items-center gap-2">
+                                <span>沖繩</span>
+                                <span className="w-1.5 h-1.5 bg-white rounded-full"></span>
+                                <span>五日遊</span>
+                            </p>
+                        </div>
+                    </header>
+                    
+                    {/* Floating Date Navigation */}
+                    <div className="px-4 -mt-8 relative z-20">
+                         <div className="bg-white rounded-[2rem] p-2 shadow-xl flex overflow-x-auto hide-scrollbar space-x-2">
+                            {itineraryData.map((day, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => setActiveTab(index)}
+                                    className={`flex-shrink-0 flex flex-col items-center justify-center w-[4.5rem] h-20 rounded-2xl transition-all duration-300
+                                        ${activeTab === index 
+                                            ? 'bg-pms292 text-white shadow-md transform scale-105' 
+                                            : 'bg-transparent text-gray-400 hover:bg-gray-50'
+                                        }`}
+                                >
+                                    <span className="text-xs font-bold opacity-80">{day.weekday}</span>
+                                    <span className="text-lg font-bold">{day.date}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Content */}
+                    <main className="max-w-xl mx-auto px-5 pt-8 z-10 relative">
+                        
+                        {/* Day Title with decorations */}
+                        <div className="mb-6 text-center animate-fade-in relative">
+                            <div className="inline-block relative">
+                                <span className="absolute -left-6 -top-2 text-2xl animate-pulse">✨</span>
+                                <h2 className="text-2xl font-bold text-textMain px-4 relative z-10">
+                                    {itineraryData[activeTab].title}
+                                </h2>
+                                <span className="absolute -right-6 -bottom-1 text-2xl animate-pulse delay-75">✨</span>
+                                <div className="h-3 w-full bg-yellow-200/60 absolute bottom-1 left-0 -z-0 rounded-full"></div>
+                            </div>
+                        </div>
+
+                        {/* Cards Container */}
+                        <div className="space-y-4">
+                            {itineraryData[activeTab].items.map((item, idx) => (
+                                <Card key={idx} item={item} />
+                            ))}
+                        </div>
+                    </main>
+
+                    {/* Footer */}
+                    <footer className="mt-8 text-center text-xs text-textLight pb-8 px-6 relative z-10">
+                        <div className="w-full h-px bg-gray-200/50 mb-6"></div>
+                        <p className="font-medium bg-white/50 inline-block px-4 py-1 rounded-full backdrop-blur-sm">祝您旅途愉快 Konnichiwa Okinawa!</p>
+                    </footer>
+
+                    {/* Background Animation - Placed at the end to be visually at bottom but z-index handles layering */}
+                    <BackgroundAnimation />
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
